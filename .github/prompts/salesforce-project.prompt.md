@@ -1,10 +1,10 @@
 ---
-description: "Catálogo de padrões de busca e regras de classificação para migração CNPJ em projetos Salesforce. Lido e preenchido pelo cnpj-migration-generic: as seções 1-4 são estáticas (regras universais derivadas do OuroFino como referência), a seção 5 é gerada automaticamente pelo agente após escanear o projeto atual."
+description: "Catálogo de padrões de busca e regras de classificação para migração CNPJ em projetos Salesforce. Lido e preenchido pelo cnpj-migration-generic: as seções 1-4 são estáticas (regras universais para qualquer projeto Salesforce), a seção 5 é gerada automaticamente pelo agente após escanear o projeto atual."
 ---
 
 # Padrões de Busca CNPJ — Projetos Salesforce
 
-> **Seções 1 a 4** — conhecimento estático, derivado do projeto OuroFino AgroCiência como referência universal. Não altere manualmente(CASO PRECISE).
+> **Seções 1 a 4** — conhecimento estático, válido para qualquer projeto Salesforce. Não altere manualmente(CASO PRECISE).
 > **Seção 5** — gerada automaticamente pelo prompt `cnpj-migration-generic` após escanear o projeto. Reescrita a cada execução de discovery.
 
 ---
