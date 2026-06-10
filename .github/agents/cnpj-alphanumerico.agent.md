@@ -181,6 +181,24 @@ private static Boolean isAllSameChar(String s) {
 
 ---
 
+## Validation Rules — Critical Constraint
+
+**Validation Rules can ONLY validate CNPJ format (regex) — NOT the DV (check digits).**
+
+`VALUE()` in Salesforce formula functions does not accept alphanumeric characters. Any attempt to compute DV arithmetic inside a Validation Rule will fail once alphanumeric CNPJs arrive.
+
+**Rule:** Validation Rules must be reduced to format-only regex validation. DV validation must live exclusively in Apex (BO layer).
+
+```xml
+<!-- CORRECT: format-only validation rule -->
+<errorConditionFormula>NOT(REGEX(CNPJ__c, "[A-Z0-9]{2}\\.[A-Z0-9]{3}\\.[A-Z0-9]{3}/[A-Z0-9]{4}-[0-9]{2}"))</errorConditionFormula>
+
+<!-- WRONG: DV arithmetic via VALUE() will throw errors on alphanumeric CNPJs -->
+<!-- Remove any formula that calls VALUE() on CNPJ characters -->
+```
+
+---
+
 ## Impact Areas in a Salesforce Project
 
 | Area | Impact | What Changes |

@@ -20,16 +20,19 @@ You are a senior Salesforce developer specialist. You deeply understand the proj
 
 ## Project Architecture
 
-<!--
-  Describe your project's layer architecture here.
-  Example (DDD layered):
+Standard DDD layered architecture:
 
-  Trigger → TH (Trigger Handler) → BO (Business Object) → Service / DAO / Repository
+```
+Trigger → TH (Trigger Handler) → BO (Business Object) → Service / DAO / Repository
+```
 
-  Replace with your actual architecture.
--->
+- **Trigger** — thin, no logic; delegates everything to the TH
+- **TH** — orchestrates the flow, calls BOs
+- **BO** — encapsulates a single business rule or validation
+- **Service** — cross-entity operations, external integrations
+- **DAO / Repository** — all SOQL and DML
 
-_[Replace with your project's architecture description]_
+_Replace or extend this description with your project's actual layer details if it differs._
 
 ---
 
@@ -61,6 +64,24 @@ _[Replace with your project's architecture description]_
 - Class length ≤ 1000 lines
 - Method length ≤ 60 lines
 - Cyclomatic complexity ≤ 10 per method
+
+## Test Assertions
+
+**ALWAYS** use the `Assert` class — **NEVER** `System.assert*`:
+
+```apex
+// CORRECT
+Assert.isTrue(result);
+Assert.isFalse(result);
+Assert.areEqual(expected, actual);
+Assert.isNull(value);
+Assert.isNotNull(value);
+
+// WRONG — do not use
+System.assertEquals(expected, actual); // ❌
+System.assert(condition);              // ❌
+System.assertNotEquals(a, b);          // ❌
+```
 
 ---
 
