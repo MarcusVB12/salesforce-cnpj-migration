@@ -208,6 +208,7 @@ private static Boolean isAllSameChar(String s) {
 | Apex `isNumeric()` checks on CNPJ | HIGH | Remove — alphanumeric CNPJs are not numeric |
 | Duplicate Rules (declarative) | HIGH | Needs manual review in Setup — text match must be case-insensitive |
 | LWC / Aura input masks | MEDIUM | Update mask to allow [A-Z0-9] in first 12 positions |
+| Aura/LWC Controller input handlers using `replace(/\D/g, '')` or `replace(/[^\d]/g, '')` | HIGH | **Silent bug**: strips ALL letters before validation — alphanumeric CNPJ chars (A–Z) are discarded silently. Replace with `replace(/[.\-/\s]/g, '').toUpperCase()` |
 | SOQL queries comparing CNPJ | MEDIUM | Normalize before query — always store uppercase |
 | Custom Labels with "14 dígitos" | LOW | Update wording to "14 caracteres alfanuméricos" |
 | Test classes | HIGH | Add test cases for matriz, filial, legacy numeric |
@@ -248,6 +249,20 @@ List<Account> accounts = [SELECT Id, Name FROM Account WHERE CNPJ__c = :normaliz
 String raiz = CnpjUtils.getRaiz(cnpj);
 List<Account> group = [SELECT Id, CNPJ__c FROM Account WHERE CNPJ__c LIKE :raiz+'%'];
 ```
+
+### Aura/LWC Controller — `handleInputChange` anti-pattern
+
+```javascript
+// WRONG — silently discards all letters (A-Z) from alphanumeric CNPJs
+let inputValue = event.target.value.replace(/\D/g, ''); // ❌ strips A-Z
+
+// CORRECT — strips only mask characters, preserves letters, uppercases
+let inputValue = event.target.value.replace(/[.\-/\s]/g, '').toUpperCase(); // ✅
+```
+
+> **Where to search**: look for `replace(/\D/g` or `replace(/[^\d]/g` in `*Controller.js`, `*Helper.js`, `*controller.js` files inside Aura bundles and LWC `.js` files. This is a HIGH-impact silent bug — validation sees an empty/truncated string but no error is thrown.
+
+---
 
 ### LWC — Input mask (JavaScript)
 
@@ -324,6 +339,7 @@ Apex classes:     *CNPJ*, *Cnpj*, *cnpj*
 Field references: CNPJ__c
 Regex patterns:   \d{14}, [0-9]{14}, isNumeric (on CNPJ context)
 LWC/Aura:        cnpj mask, formatter, pattern attributes
+                  replace(/\D/g  or  replace(/[^\d]/g  (input handlers — HIGH risk)
 Labels:           *CNPJ*
 Duplicate Rules:  Lead_Duplicate_Rule, any rule with CNPJ field
 Custom Metadata:  CNPJ format configurations
@@ -334,7 +350,7 @@ Integrations:     WS classes, named credentials sending CNPJ payloads
 
 | Level | Criteria |
 |---|---|
-| **HIGH** | DV validation logic, `isNumeric()` on CNPJ, `\d{14}` regex, duplicate rules |
+| **HIGH** | DV validation logic, `isNumeric()` on CNPJ, `\d{14}` regex, duplicate rules, `replace(/\D/g` in input handlers |
 | **MEDIUM** | Input masks, display formatting, SOQL comparisons |
 | **LOW** | Labels, error message text, comments |
 
