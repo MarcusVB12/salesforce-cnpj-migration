@@ -87,6 +87,22 @@ FASE 3  → checklist final com itens que exigem revisão manual
 
 **Nenhum arquivo é alterado sem que você veja o diff e confirme.**
 
+> **Dica: já tem um mapeamento prévio?**
+>
+> Se você já sabe quais classes/arquivos são impactados — seja por análise própria, documentação interna ou uma execução anterior — passe essa informação junto ao chamar o prompt. O agente usará seu mapeamento como ponto de partida e complementará com a varredura automática.
+>
+> Exemplo de como chamar:
+> ```
+> /cnpj-migration-generic
+>
+> Contexto adicional: as seguintes classes já foram mapeadas como impactadas:
+> - force-app/main/default/classes/AccountBO.cls (valida CNPJ no método validate)
+> - force-app/main/default/classes/CnpjUtils.cls (lógica central de validação)
+> - force-app/main/default/lwc/cnpjInput/cnpjInput.js (máscara do campo)
+> ```
+>
+> O agente priorizará esses arquivos na FASE 0 e ainda varrará o restante do projeto para garantir cobertura total.
+
 ---
 
 ## Como os arquivos se conectam
