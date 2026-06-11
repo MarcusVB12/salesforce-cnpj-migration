@@ -208,7 +208,7 @@ private static Boolean isAllSameChar(String s) {
 | Apex `isNumeric()` checks on CNPJ | HIGH | Remove — alphanumeric CNPJs are not numeric |
 | Duplicate Rules (declarative) | HIGH | Needs manual review in Setup — text match must be case-insensitive |
 | LWC / Aura input masks | MEDIUM | Update mask to allow [A-Z0-9] in first 12 positions |
-| Aura/LWC Controller input handlers using `replace(/\D/g, '')` or `replace(/[^\d]/g, '')` | HIGH | **Silent bug**: strips ALL letters before validation — alphanumeric CNPJ chars (A–Z) are discarded silently. Replace with `replace(/[.\-/\s]/g, '').toUpperCase()` |
+| Aura/LWC Controller input handlers using `replace(/\D/g, '')` or `replace(/[^\d]/g, '')` | HIGH | **Silent bug**: strips ALL letters before validation — alphanumeric CNPJ chars (A–Z) are discarded silently. Replace with 3-step chain: `replace(/[.\-/\s]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '')` — strips mask → uppercases → removes accents/symbols |
 | SOQL queries comparing CNPJ | MEDIUM | Normalize before query — always store uppercase |
 | Custom Labels with "14 dígitos" | LOW | Update wording to "14 caracteres alfanuméricos" |
 | Test classes | HIGH | Add test cases for matriz, filial, legacy numeric |
@@ -256,10 +256,16 @@ List<Account> group = [SELECT Id, CNPJ__c FROM Account WHERE CNPJ__c LIKE :raiz+
 // WRONG — silently discards all letters (A-Z) from alphanumeric CNPJs
 let inputValue = event.target.value.replace(/\D/g, ''); // ❌ strips A-Z
 
-// CORRECT — strips only mask characters, preserves letters, uppercases
-let inputValue = event.target.value.replace(/[.\-/\s]/g, '').toUpperCase(); // ✅
+// CORRECT — 3-step chain: strip mask → uppercase → strip accents/symbols
+// Order matters: uppercase BEFORE strip, so lowercase 'a'-'z' → 'A'-'Z' are preserved
+let inputValue = event.target.value
+    .replace(/[.\-/\s]/g, '')    // 1. strip mask chars (dot, dash, slash, space)
+    .toUpperCase()               // 2. normalize to uppercase (a-z → A-Z)
+    .replace(/[^A-Z0-9]/g, ''); // 3. strip accents (Á,Ã,Ç…), symbols, anything not A-Z or 0-9 ✅
 ```
 
+> **Why 3 steps matter**: step 2 before step 3 ensures lowercase input (`ctg3pn2m000122`) is preserved — uppercased then kept. Without step 2 first, `c`–`z` would be stripped by step 3. Without step 3, accented characters (`Á`, `Ã`, `Ç`, `é`) survive and cause validation failures.
+>
 > **Where to search**: look for `replace(/\D/g` or `replace(/[^\d]/g` in `*Controller.js`, `*Helper.js`, `*controller.js` files inside Aura bundles and LWC `.js` files. This is a HIGH-impact silent bug — validation sees an empty/truncated string but no error is thrown.
 
 ---

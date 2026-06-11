@@ -45,8 +45,10 @@ description: "Catálogo de padrões de busca e regras de classificação para mi
 | `\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}` | Máscara com barra fixa — falha com letras | Adaptar para `[A-Z0-9]{2}\.[A-Z0-9]{3}…` |
 | `NOT REGEX(.*,[0-9]{14})` | Validação em fórmula Salesforce | Adaptar regex da fórmula |
 | `REGEX(.*,[0-9]{14})` | Idem | Adaptar |
-| `LEFT(CNPJ` | Extrai raiz por posição — vai mudar se raiz for alfanumérica | Revisar manualmente no Flow Builder |
-| `LEFT(CNPJ__c` | Idem para campo customizado | Revisar manualmente |
+| `LEFT(CNPJ` | Extrai raiz por posição — `LEFT(CNPJ__c,8)` é **seguro** (posição agnóstica ao conteúdo); revisar apenas se o resultado for comparado com valor numérico hardcoded | Verificar o que é feito com o resultado |
+| `LEFT(CNPJ__c` | Idem para campo customizado | Idem |
+| `replace(/\D/g` | JS Aura/LWC — descarta silenciosamente letras A–Z do CNPJ alfanumérico no `onchange` | Substituir pela cadeia de 3 passos: `.replace(/[.\-/\s]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '')` |
+| `replace(/[^\d]/g` | JS Aura/LWC — idem, variante equivalente | Idem acima |
 
 ---
 
@@ -84,8 +86,20 @@ description: "Catálogo de padrões de busca e regras de classificação para mi
 ### REVISÃO MANUAL — não pode ser alterado por deploy de código
 - `duplicateRules/` — precisa de reconfiguração no Setup > Duplicate Rules
 - `matchingRules/` — idem, Setup > Matching Rules
-- `flows/` com `LEFT(CNPJ` — validar lógica no Flow Builder
+- `flows/` com `LEFT(CNPJ` — validar lógica no Flow Builder (ver guia abaixo)
 - `objects/**/fields/` — mudança de comprimento pode exigir migração de dados
+
+#### Guia de análise de Flows com CNPJ
+
+| Padrão encontrado no Flow | Seguro? | Motivo |
+|---|---|---|
+| `LEFT({!CNPJ__c}, 8)` | ✅ Seguro | Extração de raiz por posição — funciona para qualquer string de 14 chars |
+| `Contains '0001'` sobre o campo CNPJ | ✅ Seguro | A ordem da Matriz é **sempre `0001`** tanto no formato legado quanto no novo alfanumérico |
+| `LEN(CNPJ__c) = 14` | ✅ Seguro | CNPJ alfanumérico também tem 14 chars |
+| `ISBLANK`, `IsNull`, `IsChanged` sobre campo CNPJ | ✅ Seguro | Verificações de existência — agnósticas ao conteúdo |
+| `REGEX(CNPJ__c, "[0-9]{14}")` | ❌ Quebra | Rejeita letras — substituir por `[A-Z0-9]{12}[0-9]{2}` |
+| `VALUE(LEFT(CNPJ__c,1))` ou qualquer `VALUE()` sobre chars do CNPJ | ❌ Quebra | `VALUE()` lança erro em caracteres não numéricos |
+| Comparação hardcoded tipo `CNPJ__c = '00000000000000'` | ✅ Seguro | Igualdade textual funciona para qualquer string |
 
 ---
 
