@@ -1,6 +1,5 @@
 ---
 description: "Orquestrador genérico de migração CNPJ alfanumérico para qualquer projeto Salesforce. Faz discovery automático dos arquivos impactados e guia a migração passo a passo com confirmação em cada mudança. Use quando: 'migrar CNPJ alfanumérico', 'CNPJ novo formato projeto genérico', 'iniciar migração CNPJ neste projeto'."
-mode: agent
 tools: [read, search, edit]
 ---
 

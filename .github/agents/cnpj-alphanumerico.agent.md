@@ -187,7 +187,27 @@ private static Boolean isAllSameChar(String s) {
 
 `VALUE()` in Salesforce formula functions does not accept alphanumeric characters. Any attempt to compute DV arithmetic inside a Validation Rule will fail once alphanumeric CNPJs arrive.
 
-**Rule:** Validation Rules must be reduced to format-only regex validation. DV validation must live exclusively in Apex (BO layer).
+**Rule:** Validation Rules must be reduced to format-only regex validation. DV validation must live exclusively in Apex.
+
+**Where to place DV validation in Apex:**
+- Objects that already have a dedicated CNPJ validation BO (`*ValidateCNPJ*`, `*CheckCnpj*`): add DV validation in the BO, called from the TH
+- Objects **without** a dedicated BO: add DV validation directly in the TH (`beforeInsert` + `beforeUpdate`), calling `ValidateCNPJ`. Also update the trigger to include `before update` if it only handles `before insert`
+
+```apex
+// In TriggerHandler — when no dedicated BO exists
+public static final String INVALID_CNPJ_ERROR = 'CNPJ inválido.';
+
+// Re-validates on update only when the field actually changed
+private void validateCnpj(List<MyObject__c> pList, Map<Id, MyObject__c> pOldMap) {
+    for (MyObject__c rec : pList) {
+        if (String.isBlank(rec.CnpjTXT__c)) continue;
+        if (pOldMap != null && rec.CnpjTXT__c == pOldMap.get(rec.Id)?.CnpjTXT__c) continue;
+        if (!ValidateCNPJ(rec.CnpjTXT__c)) {
+            rec.CnpjTXT__c.addError(INVALID_CNPJ_ERROR);
+        }
+    }
+}
+```
 
 ```xml
 <!-- CORRECT: format-only validation rule -->
